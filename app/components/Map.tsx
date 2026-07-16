@@ -12,6 +12,7 @@ const DynamicMap = dynamic(() => import("./MapComponents"), {
   ),
 });
 
-export default function Map() {
+export default function Map() { //
+    //map funciton
   return <DynamicMap />;
 }
