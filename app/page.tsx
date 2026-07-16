@@ -1,7 +1,7 @@
 "use client";
 import Image from 'next/image';
 import chatbotImg from './chatbot.png';
-import React, { useState } from 'react';
+//import React, { useState } from 'react';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from "next/link";
@@ -450,6 +450,9 @@ export default function Home() {
   // --- SIDE PANEL STATE ---
   const [showSidePanel, setShowSidePanel] = useState<boolean>(false);
 
+  // --- SUBMIT FORM MODAL STATE ---
+  const [showFormModal, setShowFormModal] = useState<boolean>(false);
+
   // --- NEW: CHATBOT STATE ---
   const [showChatbotModal, setShowChatbotModal] = useState<boolean>(false);
 
@@ -470,6 +473,12 @@ export default function Home() {
   const handleEmergencyClickFromPanel = () => {
     setShowSidePanel(false);
     setShowEmergencyList(true);
+  };
+
+  const handleSubmitForm = (data: SubmitData) => {
+    console.log('Submitted report:', data);
+    setShowFormModal(false);
+    alert('Thank you! Your report has been submitted.');
   };
 
   // Content for the scrolling marquee banner (Mauritius Health Alerts)
@@ -731,29 +740,50 @@ export default function Home() {
         <div className={`grid gap-5 my-2 ${userRole === 'child' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
           
           {/* Quiz Card */}
-          <a 
-            href="/quiz" 
-            className={`backdrop-blur-xs border-2 border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all group focus:outline-none focus:ring-3 focus:ring-emerald-500
-              ${userRole === 'child' 
-                ? 'bg-white/95 shadow-md animate-pulse hover:animate-none active:scale-95 hover:scale-[1.02] border-emerald-300' 
-                : 'bg-white hover:border-emerald-600 hover:shadow-lg'
-              }`}
-          >
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-3xl mb-4 group-hover:scale-105 transition-transform">
-              ❓
-            </div>
-            <span className="text-2xl font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
-              Health Quiz
-            </span>
-            <p className="text-slate-700 text-sm sm:text-base font-bold mt-2.5 max-w-[240px]">
-              Test your knowledge on preventing local outbreaks.
-            </p>
-          </a>
+          <Link 
+          href={userRole === 'child' ? '/quiz/kids' : '/quiz'} 
+          className={`backdrop-blur-xs border-2 border-slate-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all group focus:outline-none focus:ring-3 focus:ring-emerald-500
+            ${userRole === 'child' 
+              ? 'bg-white/95 shadow-md animate-pulse hover:animate-none active:scale-95 hover:scale-[1.02] border-emerald-300' 
+              : 'bg-white hover:border-emerald-600 hover:shadow-lg'
+            }`}
+        >
+          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-3xl mb-4 group-hover:scale-105 transition-transform">
+            ❓
+          </div>
+          <span className="text-2xl font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
+            Health Quiz
+          </span>
+          <p className="text-slate-700 text-sm sm:text-base font-bold mt-2.5 max-w-[240px]">
+            Test your knowledge on preventing local outbreaks.
+          </p>
+        </Link>
 
           {/* Map Card - Completely removed from layout when profile mode is 'child' */}
-          {userRole === 'adult' && (
-            <a 
-              href="/map" 
+    
+
+          {/* Map Card */}
+          {userRole === 'child' ? (
+            <div 
+              className="bg-slate-100 border-2 border-slate-200 opacity-60 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-not-allowed relative group"
+              title="This high-density data map features are limited for your user profile."
+            >
+              <div className="absolute top-3 right-3 text-xs font-semibold bg-slate-200 px-2 py-0.5 rounded text-slate-600">
+                🔒 Restricted
+              </div>
+              <div className="w-16 h-16 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-3xl mb-4">
+                📍
+              </div>
+              <span className="text-2xl font-black text-slate-400">
+                Outbreak Map
+              </span>
+              <p className="text-slate-400 text-sm sm:text-base font-bold mt-2.5 max-w-[240px]">
+                {userRole === 'child' ? 'Not available for accounts under 18.' : 'Simplified viewing mode requested.'}
+              </p>
+            </div>
+          ) : (
+            <Link
+              href="/mappage"
               className="bg-white border-2 border-slate-200 hover:border-emerald-600 hover:shadow-lg rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all group focus:outline-none focus:ring-3 focus:ring-emerald-500 animate-in fade-in zoom-in-95 duration-200"
             >
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-3xl mb-4 group-hover:scale-105 transition-transform">
@@ -769,43 +799,50 @@ export default function Home() {
           )}
 
           {/* Submit Details Card */}
-          {userRole === 'child' || userRole === 'elderly' ? (
-            <div 
-              className="bg-slate-100 border border-slate-200 opacity-60 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-not-allowed relative group"
-              title="This high-density data data submission feature is limited for your user profile."
-            >
-              <div className="absolute top-3 right-3 text-xs font-semibold bg-slate-200 px-2 py-0.5 rounded text-slate-600">
-                🔒 Restricted
-              </div>
-              <div className="w-12 h-12 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xl font-bold mb-4">
-                📝
-              </div>
-              <span className="text-xl font-bold text-slate-400">
-                Submit Details
-              </span>
-              <p className="text-slate-400 text-xs mt-2 max-w-[200px]">
-                Only available for adult user profiles.
-              </p>
+         {/* Submit Details Card */}
+        {userRole === 'child' ? (
+          <div 
+            className="bg-slate-100 border-2 border-slate-200 opacity-60 rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-not-allowed relative group"
+            title="This high-density data data submission feature is limited for your user profile."
+          >
+            <div className="absolute top-3 right-3 text-xs font-semibold bg-slate-200 px-2 py-0.5 rounded text-slate-600">
+              🔒 Restricted
             </div>
-          ) : (
-            <button 
-              onClick={() => setShowFormModal(true)}
-              className="bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all group focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full"
-            >
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold mb-4 group-hover:scale-105 transition-transform">
-                📝
-              </div>
-              <span className="text-xl font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
-                Submit Details
-              </span>
-              <p className="text-slate-500 text-xs mt-2 max-w-[200px]">
-                Fill in details for specific risk track mapping.
-              </p>
-            </button>
-          )}
+            <div className="w-16 h-16 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-3xl mb-4">
+              📝
+            </div>
+            <span className="text-2xl font-black text-slate-400">
+              Submit Details
+            </span>
+            <p className="text-slate-400 text-sm sm:text-base font-bold mt-2.5 max-w-[240px]">
+              Only available for adult user profiles.
+            </p>
+          </div>
+        ) : (
+          <button 
+            onClick={() => setShowFormModal(true)}
+            className="bg-white border-2 border-slate-200 hover:border-emerald-600 hover:shadow-lg rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all group focus:outline-none focus:ring-3 focus:ring-emerald-500 animate-in fade-in zoom-in-95 duration-200 w-full"
+          >
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-3xl mb-4 group-hover:scale-105 transition-transform">
+              📝
+            </div>
+            <span className="text-2xl font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
+              Submit Details
+            </span>
+            <p className="text-slate-700 text-sm sm:text-base font-bold mt-2.5 max-w-[240px]">
+              Fill in details for specific risk track mapping.
+            </p>
+          </button>
+        )}
 
         </div>
       </main>
+
+      <SubmitFormModal
+        isOpen={showFormModal}
+        onClose={() => setShowFormModal(false)}
+        onSubmit={handleSubmitForm}
+      />
 
      {/* --- NEW: FLOATING CHATBOT IMAGE LINK (ADULT MODE ONLY) --- */}
       {userRole === 'adult' && (
