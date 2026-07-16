@@ -1,6 +1,30 @@
 import { supabase } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
+/**
+ * 1. GET: Fetch all heatzones
+ * This pulls all active outbreaks & hazards to draw circles on your map.
+ */
+export async function GET() {
+  try {
+    const { data, error } = await supabase
+      .from('heatzones')
+      .select('*')
+      .order('created_at', { ascending: false }); // Newest reports first
+
+    if (error) throw error;
+
+    return NextResponse.json(data, { status: 200 });
+  } catch (error) {
+    console.error("Supabase GET Error:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+/**
+ * 2. POST: Insert a new report
+ * This is your original code to handle the hazard submission form.
+ */
 export async function POST(request) {
   try {
     // 1. Parse the incoming JSON data from the frontend form
