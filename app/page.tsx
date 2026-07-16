@@ -475,10 +475,46 @@ export default function Home() {
     setShowEmergencyList(true);
   };
 
-  const handleSubmitForm = (data: SubmitData) => {
-    console.log('Submitted report:', data);
-    setShowFormModal(false);
-    alert('Thank you! Your report has been submitted.');
+const handleSubmitForm = async (data: SubmitData) => {
+
+    try {
+      // Maps React camelCase states to the Supabase database snake_case columns
+      const payload = {
+        risk_type: data.type, // 'disease' or 'health_risk'
+        disease_type: data.type === 'disease' ? data.diseaseType : null,
+        location_name: data.locationName,
+        description: data.type === 'health_risk' 
+          ? data.description 
+          : `Monitored tracking for ${data.diseaseType} active.`,
+        severity_level: data.severityType,
+        latitude: data.latitude,
+        longitude: data.longitude,
+      };
+
+      const response = await fetch('/api/heatzones', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Database rejected the submission.');
+      }
+
+      console.log('Saved to Supabase successfully:', result.data);
+      setShowFormModal(false);
+      alert('Thank you! Your health report has been submitted and saved.');
+
+    } catch (error: any) {
+      console.error('Submission Failed:', error);
+      alert(`Could not save report: ${error.message || 'Server offline'}`);
+    } finally {
+     
+    }
   };
 
   // Content for the scrolling marquee banner (Mauritius Health Alerts)
