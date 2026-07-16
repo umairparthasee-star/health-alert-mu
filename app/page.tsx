@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from "next/link";
 
 // ============================================================================
 // 1. TYPE DEFINITIONS
@@ -640,8 +641,8 @@ const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
               </p>
             </div>
           ) : (
-            <a 
-              href="/map" 
+            <Link
+              href="/mappage"
               className="bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md rounded-xl p-8 flex flex-col items-center justify-center text-center transition-all group focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl font-bold mb-4 group-hover:scale-105 transition-transform">
@@ -653,7 +654,7 @@ const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
               <p className="text-slate-500 text-xs mt-2 max-w-[200px]">
                 View real-time case tracking across districts.
               </p>
-            </a>
+            </Link>
           )}
 
           {/* Submit Details Card */}

@@ -5,6 +5,19 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, CircleMarker, useMap } 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+// ============================================================================
+// 1. TYPE DEFINITIONS
+// ============================================================================
+export interface Report {
+  disease_type: string;
+  risk_type: 'disease' | 'health_risk';
+  location_name: string;
+  description: string | null;
+  severity_level: string;
+  latitude: number;
+  longitude: number;
+}
+
 // --- The Bulletproof Map Pin Fix ---
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -25,7 +38,7 @@ function FlyToLocation({ center, zoom }: { center: [number, number], zoom: numbe
   return null;
 }
 
-// --- Mock Data (9 Districts of Mauritius) ---
+// --- Mock Facilities (Hospitals of Mauritius) ---
 const mockFacilities = [
   { id: 1, name: "Dr A. G. Jeetoo Hospital", type: "Regional Hospital", lat: -20.1625, lng: 57.4966, phone: "2031001" },
   { id: 2, name: "Victoria Hospital (Candos)", type: "Regional Hospital", lat: -20.2678, lng: 57.4894, phone: "4253031" },
@@ -38,28 +51,57 @@ const mockFacilities = [
   { id: 9, name: "Wellkin Hospital", type: "Private Hospital", lat: -20.2316, lng: 57.5028, phone: "6051000" },
 ];
 
-const mockReports = [
-  { risk_type: "Dengue Outbreak", description: "Multiple cases reported in this area.", lat: -20.1609, lng: 57.5012, riskLevel: "High" },
-  { risk_type: "Stagnant Water 💧", description: "Large pool of water behind the market.", lat: -20.2678, lng: 57.4894, riskLevel: "Medium" },
-  { risk_type: "Illegal Dumping 🗑️", description: "Trash accumulating near the river.", lat: -20.0381, lng: 57.6534, riskLevel: "Low" }
+// --- Mock Data Fallback (Aligned with Supabase Database format) ---
+const MOCK_REPORTS: Report[] = [
+  { 
+    disease_type: "Dengue", 
+    risk_type: "disease", 
+    location_name: "Port Louis Central", 
+    description: "Multiple cases reported in this area.", 
+    severity_level: "High", 
+    latitude: -20.1609, 
+    longitude: 57.5012 
+  },
+  { 
+    disease_type: "Stagnant Water 💧", 
+    risk_type: "health_risk", 
+    location_name: "Victoria Park", 
+    description: "Large pool of water behind the market.", 
+    severity_level: "Medium", 
+    latitude: -20.2678, 
+    longitude: 57.4894 
+  },
+  { 
+    disease_type: "Illegal Dumping 🗑️", 
+    risk_type: "health_risk", 
+    location_name: "Goodlands Coastline", 
+    description: "Trash accumulating near the river.", 
+    severity_level: "Low", 
+    latitude: -20.0381, 
+    longitude: 57.6534 
+  }
 ];
 
-export default function MapComponent() {
-  const [reports, setReports] = useState(mockReports);
-  
-  // New States for Geolocation
+interface MapComponentProps {
+  reports?: Report[]; // Optional prop falling back to MOCK_REPORTS
+}
+
+export default function MapComponent({ reports = MOCK_REPORTS }: MapComponentProps) {
+  // Geolocation States
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
 
   const defaultCenter: [number, number] = [-20.2838, 57.5458];
 
+  // Robust risk color helper supporting multiple input naming conventions (High, Elevated, Medium, etc.)
   const getRiskColor = (level: string) => {
-    if (level === "Low") return "#10b981"; 
-    if (level === "Medium") return "#f59e0b"; 
-    return "#ef4444"; 
+    const lower = level ? level.toLowerCase() : "";
+    if (lower.includes("low")) return "#10b981"; // Emerald Green
+    if (lower.includes("medium") || lower.includes("moderate") || lower.includes("elevated")) return "#f59e0b"; // Amber Orange
+    return "#ef4444"; // Rose Red (High, Severe, Critical)
   };
 
-  // --- Geolocation Function ---
+  // --- Geolocation Handler ---
   const handleLocateMe = () => {
     setIsLocating(true);
     if ("geolocation" in navigator) {
@@ -89,10 +131,10 @@ export default function MapComponent() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* If we have the user's location, pan the camera to them and zoom in */}
+        {/* Pan smoothly to the user location if calculated */}
         {userLocation && <FlyToLocation center={userLocation} zoom={13} />}
 
-        {/* Draw the "Blue Dot" for the User */}
+        {/* User Geolocation Blue Dot Marker */}
         {userLocation && (
           <CircleMarker 
             center={userLocation} 
@@ -103,7 +145,7 @@ export default function MapComponent() {
           </CircleMarker>
         )}
 
-        {/* Draw the Hospitals */}
+        {/* Draw Hospitals */}
         {mockFacilities.map((facility) => (
           <Marker key={facility.id} position={[facility.lat, facility.lng]} icon={customIcon}>
             <Popup>
@@ -114,31 +156,38 @@ export default function MapComponent() {
           </Marker>
         ))}
 
-        {/* Draw Risk Reports */}
+        {/* Draw Dynamic Risk Circles (Updated with your database schema fields) */}
         {reports.map((report, idx) => {
-          const areaColor = getRiskColor(report.riskLevel);
+          const areaColor = getRiskColor(report.severity_level);
           return (
             <Circle 
               key={idx}
-              center={[report.lat, report.lng]} 
+              center={[report.latitude, report.longitude]} 
               pathOptions={{ color: areaColor, fillColor: areaColor, fillOpacity: 0.4 }}
               radius={1500} 
             >
               <Popup>
                 <div className="flex items-center justify-between mb-1 gap-2">
-                  <strong style={{ color: areaColor }} className="block">{report.risk_type}</strong>
+                  <strong style={{ color: areaColor }} className="block">
+                    {report.risk_type === 'disease' ? '🦠' : '⚠️'} {report.disease_type}
+                  </strong>
                   <span className="badge badge-sm font-bold opacity-80" style={{ backgroundColor: areaColor, color: 'white', border: 'none' }}>
-                    {report.riskLevel}
+                    {report.severity_level}
                   </span>
                 </div>
-                <p className="text-sm m-0 leading-tight text-slate-600">{report.description}</p>
+                {report.location_name && (
+                  <div className="text-xs font-semibold text-slate-500 mb-1.5">📍 {report.location_name}</div>
+                )}
+                {report.description && (
+                  <p className="text-sm m-0 leading-tight text-slate-600">{report.description}</p>
+                )}
               </Popup>
             </Circle>
           );
         })}
       </MapContainer>
 
-      {/* Floating "Locate Me" Button */}
+      {/* Floating Locate Button */}
       <div className="absolute bottom-6 right-4 z-[400]">
         <button 
           onClick={handleLocateMe} 
@@ -146,7 +195,7 @@ export default function MapComponent() {
           className="btn bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-none rounded-full px-6 flex items-center gap-2"
         >
           {isLocating ? (
-            <span className="loading loading-spinner loading-sm"></span>
+            <span className="loading loading-spinner loading-sm animate-spin">🌀</span>
           ) : (
             <span className="text-lg">📍</span>
           )}
