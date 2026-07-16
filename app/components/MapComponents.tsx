@@ -90,6 +90,8 @@ export default function MapComponent({ reports = MOCK_REPORTS }: MapComponentPro
   // Geolocation States
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [reportsState, setReportsState] = useState<Report[]>(reports);
+  const [isLoadingReports, setIsLoadingReports] = useState<boolean>(true);
 
   const defaultCenter: [number, number] = [-20.2838, 57.5458];
 
@@ -102,6 +104,28 @@ export default function MapComponent({ reports = MOCK_REPORTS }: MapComponentPro
   };
 
   // --- Geolocation Handler ---
+  useEffect(() => {
+    async function fetchReports() {
+      setIsLoadingReports(true);
+      try {
+        const response = await fetch('/api/heatzones');
+        if (!response.ok) {
+          throw new Error('Failed to fetch health reports');
+        }
+
+        const data: Report[] = await response.json();
+        setReportsState(data ?? []);
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+        setReportsState(reports);
+      } finally {
+        setIsLoadingReports(false);
+      }
+    }
+
+    fetchReports();
+  }, [reports]);
+
   const handleLocateMe = () => {
     setIsLocating(true);
     if ("geolocation" in navigator) {
@@ -157,7 +181,7 @@ export default function MapComponent({ reports = MOCK_REPORTS }: MapComponentPro
         ))}
 
         {/* Draw Dynamic Risk Circles (Updated with your database schema fields) */}
-        {reports.map((report, idx) => {
+        {reportsState.map((report, idx) => {
           const areaColor = getRiskColor(report.severity_level);
           return (
             <Circle 
