@@ -542,7 +542,7 @@ export default function Home() {
                 
                 {userRole === 'adult' && (
                   <a 
-                    href="/map"
+                    href="/mappage"
                     className="flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-slate-800 text-slate-100 hover:text-white text-base sm:text-lg font-bold transition-colors border border-slate-800 animate-in fade-in zoom-in-95 duration-200"
                   >
                     <span className="text-2xl">📍</span> Outbreak Map Page
